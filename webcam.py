@@ -20,11 +20,10 @@ def decode_filename(filename: str):
 class File:
     def __init__(self, name):
         self.name = name
-        # TODO rename self.date to self.datetime
-        self.group_name, self.date, self.index = decode_filename(name)
+        self.group_name, self.datetime, self.index = decode_filename(name)
         if self.name is None or self.group_name is None:
             return
-        self.date_str = datetime.datetime.strftime(self.date, '%Y-%m-%d')
+        self.date_str = datetime.datetime.strftime(self.datetime, '%Y-%m-%d')
 
     def __lt__(self, other):
         return self.name < other.name
