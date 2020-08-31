@@ -7,12 +7,14 @@ from webcam import decode_filename, Metadata
 
 class TestDecodeFilename(TestCase):
     def test_decode_filename(self):
-        target = decode_filename('CAM1_123-20200825130031-00.jpg')
-        self.assertEqual(2, len(target))
+        target = decode_filename('CAM1_123-20200825130031-89.jpg')
+        self.assertEqual(3, len(target))
         group = target[0]
         date = target[1]
+        index = target[2]
         self.assertEqual('123', group)
         self.assertEqual('2020-08-25 13-00-31', date.strftime('%Y-%m-%d %H-%M-%S'))
+        self.assertEqual('89',index)
 
 
 class TestWebcam(TestCase):
@@ -20,6 +22,8 @@ class TestWebcam(TestCase):
     def setUp(self) -> None:
         with open('test_files/ls.txt', 'r') as f:
             self.lines = [line.rstrip('\n') for line in f.readlines()]
+        with open('test_files/ls_bug1.txt', 'r') as f:
+            self.lines_bug1 = [line.rstrip('\n') for line in f.readlines()]
 
     def test_file_line_count(self):
         self.assertEqual(103, len(self.lines))
@@ -44,6 +48,10 @@ class TestWebcam(TestCase):
         self.assertEqual('2020-08-27', target.days[1].date_str)
         self.assertEqual('2020-08-30', target.days[2].date_str)
 
+    def test_days_names(self):
+        target = Metadata(self.lines)
+        self.assertEqual(['2020-08-26', '2020-08-27', '2020-08-30'], target.days.names)
+
     def test_days_string_dictionary(self):
         target = Metadata(self.lines)
         self.assertEqual('2020-08-27', target.days['2020-08-27'].date_str)
@@ -52,4 +60,18 @@ class TestWebcam(TestCase):
         target = Metadata(self.lines)
         groups = target.days['2020-08-27'].groups
         self.assertEqual(['402', '403'], groups.names)
+
+    def test_with_folder(self):
+        target = Metadata.from_folder('test_files/flat_files')
+        self.assertEqual(['174', '500', '804', '805'], target.groups.names)
+
+    def test_days_names_with_folder(self):
+        target = Metadata.from_folder('test_files/flat_files')
+        self.assertEqual(['2020-08-25', '2020-08-27', '2020-08-30'], target.days.names)
+
+    def test_days_names_bug1(self):
+        target = Metadata(self.lines_bug1)
+        actual = target.days.names
+        expected = sorted(list(set(actual)))
+        self.assertEqual(expected,actual)
 
