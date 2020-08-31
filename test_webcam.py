@@ -2,7 +2,7 @@ import unittest
 from pprint import pprint
 from unittest import TestCase
 
-from webcam import decode_filename, GroupList
+from webcam import decode_filename, Metadata
 
 
 class TestDecodeFilename(TestCase):
@@ -25,25 +25,31 @@ class TestWebcam(TestCase):
         self.assertEqual(103, len(self.lines))
 
     def test_GroupList(self):
-        target = GroupList(self.lines)
-        self.assertEqual(['01', '02', '355', '402', '403'], target.names)
+        target = Metadata(self.lines)
+        self.assertEqual(['01', '02', '355', '402', '403'], target.groups.names)
         self.assertEqual(91, len(target.files))
 
     def test_GroupList_files(self):
-        target = GroupList(reversed(self.lines))
-        actual = target['402'].files
+        target = Metadata(reversed(self.lines))
+        actual = target.groups['402'].files
         self.assertEqual(12, len(actual))
         self.assertEqual('CAM1_402-20200827012933-00.jpg', actual[0].name)
         self.assertEqual('CAM1_402-20200827012934-01.jpg', actual[3].name)
         self.assertEqual('CAM1_402-20200827012938-01.jpg', actual[-1].name)
 
     def test_days(self):
-        target = GroupList(self.lines)
+        target = Metadata(self.lines)
         self.assertEqual(3, len(target.days))
         self.assertEqual('2020-08-26', target.days[0].date_str)
         self.assertEqual('2020-08-27', target.days[1].date_str)
         self.assertEqual('2020-08-30', target.days[2].date_str)
 
     def test_days_string_dictionary(self):
-        target = GroupList(self.lines)
+        target = Metadata(self.lines)
         self.assertEqual('2020-08-27', target.days['2020-08-27'].date_str)
+
+    def test_days_groups(self):
+        target = Metadata(self.lines)
+        groups = target.days['2020-08-27'].groups
+        self.assertEqual(['402', '403'], groups.names)
+

@@ -35,14 +35,25 @@ class Group:
 class Day:
     def __init__(self, date_str, group_list: List[Group]):
         self.date_str = date_str
+        self.groups = Groups(group_list)
 
     def __lt__(self, other):
         return self.date_str < other.date_str
 
 
-class Days:
+class Groups:
     def __init__(self, groups: List[Group]):
-        by_date_str = groupby(groups, lambda group: group.date_str)
+        self.groups = groups
+        self.names = [group.name for group in self.groups]
+        self.groups_by_name = {group.name: group for group in self.groups}
+
+    def __getitem__(self, item):
+        return self.groups_by_name[item]
+
+
+class Days:
+    def __init__(self, groups: Groups):
+        by_date_str = groupby(groups.groups, lambda group: group.date_str)
         self.list = [Day(date_str, list(group_list)) for date_str, group_list in by_date_str]
         self.list.sort()
         self.by_date_str = {d.date_str: d for d in self.list}
@@ -58,14 +69,9 @@ class Days:
         return self.list[item]
 
 
-class GroupList:
+class Metadata:
     def __init__(self, file_list):
         self.files: List[File] = [f for f in [File(name) for name in sorted(file_list)] if f.group_name is not None]
         by_name = groupby(self.files, lambda f: f.group_name)
-        self.groups: List[Group] = [Group(name, list(files)) for name, files in by_name]
-        self.names = [group.name for group in self.groups]
-        self.groups_by_name = {group.name: group for group in self.groups}
+        self.groups: Groups = Groups([Group(name, list(files)) for name, files in by_name])
         self.days = Days(self.groups)
-
-    def __getitem__(self, item):
-        return self.groups_by_name[item]
