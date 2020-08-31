@@ -17,22 +17,20 @@ class TestDecodeFilename(TestCase):
 
 class TestWebcam(TestCase):
 
-    def test_file_line_count(self):
+    def setUp(self) -> None:
         with open('test_files/ls.txt', 'r') as f:
-            lines = f.readlines()
-        self.assertEqual(103, len(lines))
+            self.lines = [line.rstrip('\n') for line in f.readlines()]
+
+    def test_file_line_count(self):
+        self.assertEqual(103, len(self.lines))
 
     def test_GroupList(self):
-        with open('test_files/ls.txt', 'r') as f:
-            lines = f.readlines()
-        target = GroupList(lines)
+        target = GroupList(self.lines)
         self.assertEqual(['01', '02', '355', '402', '403'], target.names)
         self.assertEqual(91, len(target.files))
 
     def test_GroupList_files(self):
-        with open('test_files/ls.txt', 'r') as f:
-            lines = [line.rstrip('\n') for line in f.readlines()]
-        target = GroupList(reversed(lines))
+        target = GroupList(reversed(self.lines))
         actual = target['402'].files
         self.assertEqual(12, len(actual))
         self.assertEqual('CAM1_402-20200827012933-00.jpg', actual[0].name)
