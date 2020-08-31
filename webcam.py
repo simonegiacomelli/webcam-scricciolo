@@ -24,15 +24,18 @@ class File:
         if self.name is None or self.group_name is None:
             return
         self.date_str = datetime.datetime.strftime(self.datetime, '%Y-%m-%d')
+        self.time_str = datetime.datetime.strftime(self.datetime, '%H:%M:%S')
 
     def __lt__(self, other):
         return self.name < other.name
+
 
 class Group:
     def __init__(self, name, files: List[File]):
         self.name = name
         self.files = sorted(files)
         self.date_str = self.files[0].date_str
+        self.time_str = self.files[0].time_str
 
     def __lt__(self, other):
         return (self.date_str, self.name) < (other.date_str, other.name)
@@ -46,6 +49,9 @@ class Day:
     def __lt__(self, other):
         return self.date_str < other.date_str
 
+    def __repr__(self):
+        return self.date_str + ' ' + str([g.time_str for g in self.groups.groups])
+
 
 class Groups:
     def __init__(self, groups: List[Group]):
@@ -53,7 +59,9 @@ class Groups:
         self.names = [group.name for group in self.groups]
         self.groups_by_name = {group.name: group for group in self.groups}
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> Group:
+        if isinstance(item, int):
+            return self.groups[item]
         return self.groups_by_name[item]
 
 
@@ -86,3 +94,10 @@ class Metadata:
     @classmethod
     def from_folder(cls, file) -> 'Metadata':
         return Metadata(os.listdir(file))
+
+
+if __name__ == '__main__':
+    md = Metadata.from_folder('/Users/simonegiacomelli/Documents/webcam/pi/webcam/capture')
+    day = md.days[0]
+    print(day.date_str)
+    pprint([(g.time_str, g.files[0].name) for g in day.groups])

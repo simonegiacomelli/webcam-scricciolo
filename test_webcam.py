@@ -14,7 +14,7 @@ class TestDecodeFilename(TestCase):
         index = target[2]
         self.assertEqual('123', group)
         self.assertEqual('2020-08-25 13-00-31', date.strftime('%Y-%m-%d %H-%M-%S'))
-        self.assertEqual('89',index)
+        self.assertEqual('89', index)
 
 
 class TestWebcam(TestCase):
@@ -41,6 +41,10 @@ class TestWebcam(TestCase):
         self.assertEqual('CAM1_402-20200827012934-01.jpg', actual[3].name)
         self.assertEqual('CAM1_402-20200827012938-01.jpg', actual[-1].name)
 
+    def test_Groups_index(self):
+        target = Metadata(reversed(self.lines))
+        self.assertEqual('402', target.days['2020-08-27'].groups[0].name)
+
     def test_days(self):
         target = Metadata(self.lines)
         self.assertEqual(3, len(target.days))
@@ -61,6 +65,10 @@ class TestWebcam(TestCase):
         groups = target.days['2020-08-27'].groups
         self.assertEqual(['402', '403'], groups.names)
 
+    def test_group_time_str(self):
+        target = Metadata(self.lines)
+        self.assertEqual('01:29:33', target.groups['402'].time_str)
+
     def test_with_folder(self):
         target = Metadata.from_folder('test_files/flat_files')
         self.assertEqual(['174', '500', '804', '805'], target.groups.names)
@@ -73,5 +81,4 @@ class TestWebcam(TestCase):
         target = Metadata(self.lines_bug1)
         actual = target.days.names
         expected = sorted(list(set(actual)))
-        self.assertEqual(expected,actual)
-
+        self.assertEqual(expected, actual)
