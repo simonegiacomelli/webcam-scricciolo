@@ -36,3 +36,14 @@ class TestWebcam(TestCase):
         self.assertEqual('CAM1_402-20200827012933-00.jpg', actual[0].name)
         self.assertEqual('CAM1_402-20200827012934-01.jpg', actual[3].name)
         self.assertEqual('CAM1_402-20200827012938-01.jpg', actual[-1].name)
+
+    def test_days(self):
+        target = GroupList(self.lines)
+        self.assertEqual(3, len(target.days))
+        self.assertEqual('2020-08-26', target.days[0].date_str)
+        self.assertEqual('2020-08-27', target.days[1].date_str)
+        self.assertEqual('2020-08-30', target.days[2].date_str)
+
+    def test_days_string_dictionary(self):
+        target = GroupList(self.lines)
+        self.assertEqual('2020-08-27', target.days['2020-08-27'].date_str)
