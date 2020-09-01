@@ -5,6 +5,140 @@
     <title>Scricciolo webcam</title>
 </head>
 <body>
-welcome
+<div id="days_div"></div>
+
+
+<br>
+<img id="img_tag" src="" alt="">
+<button onclick="return reset_index()">reset</button> &nbsp;
+<button onclick="return change_image(-1)">prev</button> &nbsp;
+<button onclick="return change_image(1)">next</button>
+<label>
+    <input id="automatic_tag" type="checkbox" onclick="automatic_next()">automatic next
+</label>
+<label><input id="automatic_msec" type="number" value="300"> msec wait
+</label>
+<div id="img_div"></div>
+
+
+<template id="day_template">
+    <div id="temp_day"></div>
+    <div id="temp_groups_container">
+
+    </div>
+    <br>
+</template>
+
+<template id="group_template">
+
+    <a id="temp_group"></a>
+
+</template>
+
+<script>
+
+    async function get(url) {
+        let response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        } else {
+            return await response.json();
+        }
+    }
+
+    let day_template = document.querySelector('#day_template');
+    let group_template = document.querySelector('#group_template');
+    let days_div = document.getElementById('days_div')
+    let img_div = document.getElementById('img_div')
+    let img_tag = document.getElementById('img_tag')
+    let automatic_tag = document.getElementById('automatic_tag')
+    let automatic_msec = document.getElementById('automatic_msec')
+    let image_list = [];
+    let image_index = 0;
+
+    function reset_index(){
+        image_index = 0;
+        load_image();
+    }
+    function load_image() {
+        filename = image_list[image_index]
+        console.log(`loading ${filename}`)
+        img_div.innerHTML = filename + ` (${image_index + 1}/${image_list.length})`
+        img_tag.src = '/api/image?filename=' + filename
+    }
+
+    function change_image(offset) {
+        let index = image_index + offset;
+        if (index < 0 || index >= image_list.length) {
+            img_div.innerHTML = 'no further images';
+            return false;
+        }
+        image_index = index;
+        load_image();
+        return true;
+    }
+
+    function automatic_next() {
+        if (!automatic_tag.checked)
+            return;
+        msec = parseInt(automatic_msec.value, 10);
+        setTimeout(() => {
+            if (change_image(1))
+                automatic_next()
+            else {
+                automatic_tag.checked = false;
+            }
+        }, msec);
+    }
+
+    async function group_click(day, group) {
+        let filename = group[1];
+        let gs = await get('/api/group_summary?filename=' + filename);
+        // let img = document.createElement('img')
+        image_list = gs;
+        load_image(0)
+        img_div.scrollIntoView({behavior: 'smooth'})
+        //console.log(gs);
+    }
+
+    function append_day(day) {
+        let day_instance = day_template.content.cloneNode(true);
+        let temp_day = (day_instance.querySelectorAll('#temp_day'))[0];
+        let temp_groups_container = day_instance.querySelector('#temp_groups_container');
+        day_id = day[0]
+        groups = day[1]
+        temp_day.id = `day-${day_id}`
+        temp_day.innerHTML = day_id;
+
+        temp_groups_container.id = `group-container-${day_id}`
+
+        days_div.appendChild(day_instance);
+
+        for (let group of groups) {
+            // debugger;
+            let group_instance = group_template.content.cloneNode(true);
+            let temp_group = group_instance.querySelector('#temp_group')
+            temp_group.id = `group-${group[0]}`
+            temp_group.innerHTML = group[0]
+            temp_group.href = '#'
+            temp_groups_container.appendChild(group_instance);
+            temp_group.onclick = (event) => {
+                group_click(day, group)
+            }
+        }
+
+    }
+
+    async function start() {
+        let summary = await get('/api/summary');
+        days_div.innerHTML = '';
+        for (let day of summary) {
+            append_day(day)
+        }
+    }
+
+    start()
+
+</script>
 </body>
 </html>

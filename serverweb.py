@@ -1,4 +1,5 @@
 import json
+import sys
 from functools import partial
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
@@ -67,9 +68,19 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
 
 def main():
+    print('starting server web...')
+    args = sys.argv[1:]
+    if len(args) > 0:
+        image_directory = args[0]
+    else:
+        image_directory = './test_files/flat_files'
+
     server = ('', 8000)
-    httpd = HTTPServer(server,
-                       partial(RequestHandler, image_directory='./test_files/flat_files', directory='./wwwroot'))
+
+    httpd = HTTPServer(server, partial(RequestHandler
+                                       , image_directory=image_directory
+                                       , directory='./wwwroot'))
+    print('serving...')
     httpd.serve_forever()
 
 
