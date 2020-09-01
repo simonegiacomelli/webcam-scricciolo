@@ -1,4 +1,5 @@
 import itertools
+import json
 from itertools import groupby
 import os
 import datetime
@@ -25,9 +26,16 @@ class File:
             return
         self.date_str = datetime.datetime.strftime(self.datetime, '%Y-%m-%d')
         self.time_str = datetime.datetime.strftime(self.datetime, '%H:%M:%S')
+        self.group = None
 
     def __lt__(self, other):
         return self.name < other.name
+
+    def next(self) -> 'File':
+        return None
+
+    def prev(self) -> 'File':
+        return None
 
 
 class Group:
@@ -36,6 +44,8 @@ class Group:
         self.files = sorted(files)
         self.date_str = self.files[0].date_str
         self.time_str = self.files[0].time_str
+        for f in files:
+            f.group = self
 
     def __lt__(self, other):
         return (self.date_str, self.name) < (other.date_str, other.name)
@@ -84,20 +94,37 @@ class Days:
         return self.list[item]
 
 
+class Files(list):
+    def __init__(self, files: List[File]):
+        super().__init__(files)
+        self.by_name = {f.name: f for f in files}
+
+    def __getitem__(self, item):
+        if isinstance(item, str):
+            return self.by_name[item]
+        return super().__getitem__(item)
+
+
 class Metadata:
     def __init__(self, file_list):
-        self.files: List[File] = sorted([f for f in [File(name) for name in file_list] if f.group_name is not None])
-        by_name = groupby(self.files, lambda f: f.group_name)
-        self.groups: Groups = Groups([Group(name, list(files)) for name, files in by_name])
+        self.files: Files = Files(sorted([f for f in [File(name) for name in file_list] if f.group_name is not None]))
+        by_group_name = groupby(self.files, lambda f: f.group_name)
+        self.groups: Groups = Groups([Group(name, list(files)) for name, files in by_group_name])
         self.days = Days(self.groups)
 
     @classmethod
     def from_folder(cls, file) -> 'Metadata':
         return Metadata(os.listdir(file))
 
+    @property
+    def summary(self):
+        # [ day_1, day_2, ..., day_n]
+        # day_i = ('2020-08-31',[ group_1, group_2, ..., group_n] )
+        # group_i = ( '17:15:49', 'CAM1_01-20200830171549-00.jpg' )
+        return [[d.date_str, [(g.time_str, g.files[0].name) for g in d.groups]] for d in self.days]
+
 
 if __name__ == '__main__':
     md = Metadata.from_folder('/Users/simonegiacomelli/Documents/webcam/pi/webcam/capture')
-    day = md.days[0]
-    print(day.date_str)
-    pprint([(g.time_str, g.files[0].name) for g in day.groups])
+
+    print(json.dumps(md.summary,indent=2))

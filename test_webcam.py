@@ -2,7 +2,7 @@ import unittest
 from pprint import pprint
 from unittest import TestCase
 
-from webcam import decode_filename, Metadata
+from webcam import decode_filename, Metadata, File, Group
 
 
 class TestDecodeFilename(TestCase):
@@ -82,3 +82,37 @@ class TestWebcam(TestCase):
         actual = target.days.names
         expected = sorted(list(set(actual)))
         self.assertEqual(expected, actual)
+
+    def test_files_by_name_should_match_group(self):
+        target = Metadata(self.lines)
+        file: File = target.files['CAM1_402-20200827012938-01.jpg']
+        self.assertEqual('CAM1_402-20200827012938-01.jpg', file.name)
+
+    def test_files_by_name__should_provide_group(self):
+        target = Metadata(self.lines)
+        file: File = target.files['CAM1_402-20200827012938-01.jpg']
+        group: Group = file.group
+        self.assertEqual('402', group.name)
+        self.assertEqual(12, len(group.files))
+
+    def test_files__next(self):
+        target = Metadata(self.lines)
+
+        next: File = target.files['CAM1_402-20200827012937-00.jpg'].next()
+        self.assertEqual('CAM1_402-20200827012937-01.jpg', next.name)
+        prev = next.prev()
+        self.assertEqual('CAM1_402-20200827012937-00.jpg', prev.name)
+
+    def test_summary_should_have_length_as_days(self):
+        target = Metadata(self.lines)
+
+        summary = target.summary
+        self.assertEqual(list, type(summary))
+        self.assertEqual(3, len(summary))
+
+        expected_day0 = ['2020-08-26', [('13:55:49', 'CAM1_355-20200826135549-00.jpg')]]
+        self.assertEqual(expected_day0, summary[0])
+
+        expected_day1 = ['2020-08-27', [('01:29:33', 'CAM1_402-20200827012933-00.jpg'),
+                                        ('02:00:00', 'CAM1_403-20200827020000-00.jpg')]]
+        self.assertEqual(expected_day1, summary[1])
