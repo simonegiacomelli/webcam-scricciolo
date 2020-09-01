@@ -17,11 +17,15 @@
 <button onclick="return change_image(-1)">prev</button> &nbsp;
 <button onclick="return change_image(1)">next</button>
 <label>
-    <input id="automatic_tag" type="checkbox" onclick="automatic_next()" checked>automatic next
+    <input id="automatic_tag" type="checkbox" onclick="automatic_next_click()" checked>automatic next
 </label>
-<label><input id="automatic_msec" type="number" value="300"> msec wait
+<label><input id="automatic_msec" type="number" value="200"> msec wait
 </label>
-<div id="img_div"></div>
+<br>
+<span id="img_div"></span><br>
+<progress id="progress_tag" value="0" max="100">0%</progress>
+
+
 <img id="img_tag" src="" alt="">
 
 
@@ -56,6 +60,7 @@
     let days_div = document.getElementById('days_div')
     let img_div = document.getElementById('img_div')
     let img_tag = document.getElementById('img_tag')
+    let progress_tag = document.getElementById('progress_tag')
     let automatic_tag = document.getElementById('automatic_tag')
     let automatic_msec = document.getElementById('automatic_msec')
     let selected_group = {}
@@ -68,13 +73,14 @@
     }
 
     function index_description() {
-        return ` (${image_index + 1}/${image_list.length}) ${selected_group[0]}`;
+        return `${selected_group[0]} (${image_index + 1}/${image_list.length})`;
     }
 
     function load_image() {
+        progress_tag.value = Math.round((image_index + 1) / image_list.length * 100)
         filename = image_list[image_index]
         console.log(`loading ${filename}`)
-        img_div.innerHTML = filename + index_description()
+        img_div.innerHTML = filename + '<br>' + index_description()
         img_tag.src = '/api/image?filename=' + filename
     }
 
@@ -94,16 +100,19 @@
     }
 
     function automatic_next() {
-        if (!automatic_tag.checked) {
-            clearAllIntervals();
-            return;
-        }
+        clearAllIntervals();
         msec = parseInt(automatic_msec.value, 10);
 
         intervals.push(setInterval(() => {
             if (!change_image(1))
                 clearAllIntervals();
         }, msec));
+    }
+    function automatic_next_click(){
+        if(automatic_tag.checked)
+             automatic_next();
+        else
+            clearAllIntervals();
     }
 
     async function group_click(day, group) {
