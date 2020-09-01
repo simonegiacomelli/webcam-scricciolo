@@ -26,10 +26,11 @@ class File:
             return
         self.date_str = datetime.datetime.strftime(self.datetime, '%Y-%m-%d')
         self.time_str = datetime.datetime.strftime(self.datetime, '%H:%M:%S')
-        self.group = None
+        self.group: Group = None
 
     def __lt__(self, other):
         return self.name < other.name
+
 
 class Group:
     def __init__(self, name, files: List[File]):
@@ -92,7 +93,7 @@ class Files(list):
         super().__init__(files)
         self.by_name = {f.name: f for f in files}
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> File:
         if isinstance(item, str):
             return self.by_name[item]
         return super().__getitem__(item)
@@ -117,7 +118,8 @@ class Metadata:
         return [[d.date_str, [(g.time_str, g.files[0].name) for g in d.groups]] for d in self.days]
 
     def group_summary(self, filename):
-        return ''
+        files = self.files[filename].group.files
+        return [f.name for f in files]
 
 
 if __name__ == '__main__':

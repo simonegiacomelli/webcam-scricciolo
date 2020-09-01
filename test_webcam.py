@@ -95,7 +95,7 @@ class TestWebcam(TestCase):
         self.assertEqual('402', group.name)
         self.assertEqual(12, len(group.files))
 
-    def test_summary_should_have_length_as_days(self):
+    def test_summary(self):
         target = Metadata(self.lines)
 
         summary = target.summary
@@ -112,3 +112,10 @@ class TestWebcam(TestCase):
         expected_day2 = ['2020-08-30', [('17:15:49', 'CAM1_01-20200830171549-00.jpg'),
                                         ('17:16:35', 'CAM1_02-20200830171635-01.jpg')]]
         self.assertEqual(expected_day2, summary[2])
+
+    def test_group_summary(self):
+        target = Metadata(self.lines)
+        gs = target.group_summary('CAM1_403-20200827020000-00.jpg')
+        self.assertEqual(7, len(gs))
+        self.assertEqual('CAM1_403-20200827020000-00.jpg', gs[0])
+        self.assertEqual('CAM1_403-20200827020003-00.jpg', gs[-1])
