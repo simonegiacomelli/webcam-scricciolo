@@ -2,23 +2,27 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Scricciolo webcam</title>
 </head>
 <body>
+<button onclick="return metadata_refresh()">metadata refresh</button>
+<br>
+<br>
 <div id="days_div"></div>
 
 
 <br>
-<img id="img_tag" src="" alt="">
 <button onclick="return reset_index()">reset</button> &nbsp;
 <button onclick="return change_image(-1)">prev</button> &nbsp;
 <button onclick="return change_image(1)">next</button>
 <label>
-    <input id="automatic_tag" type="checkbox" onclick="automatic_next()">automatic next
+    <input id="automatic_tag" type="checkbox" onclick="automatic_next()" checked>automatic next
 </label>
 <label><input id="automatic_msec" type="number" value="300"> msec wait
 </label>
 <div id="img_div"></div>
+<img id="img_tag" src="" alt="">
 
 
 <template id="day_template">
@@ -31,7 +35,7 @@
 
 <template id="group_template">
 
-    <a id="temp_group"></a>
+    <button id="temp_group"></button>
 
 </template>
 
@@ -46,6 +50,7 @@
         }
     }
 
+    let intervals = [];
     let day_template = document.querySelector('#day_template');
     let group_template = document.querySelector('#group_template');
     let days_div = document.getElementById('days_div')
@@ -53,24 +58,30 @@
     let img_tag = document.getElementById('img_tag')
     let automatic_tag = document.getElementById('automatic_tag')
     let automatic_msec = document.getElementById('automatic_msec')
+    let selected_group = {}
     let image_list = [];
     let image_index = 0;
 
-    function reset_index(){
+    function reset_index() {
         image_index = 0;
         load_image();
     }
+
+    function index_description() {
+        return ` (${image_index + 1}/${image_list.length}) ${selected_group[0]}`;
+    }
+
     function load_image() {
         filename = image_list[image_index]
         console.log(`loading ${filename}`)
-        img_div.innerHTML = filename + ` (${image_index + 1}/${image_list.length})`
+        img_div.innerHTML = filename + index_description()
         img_tag.src = '/api/image?filename=' + filename
     }
 
     function change_image(offset) {
         let index = image_index + offset;
         if (index < 0 || index >= image_list.length) {
-            img_div.innerHTML = 'no further images';
+            img_div.innerHTML = 'no further images ' + index_description();
             return false;
         }
         image_index = index;
@@ -78,27 +89,32 @@
         return true;
     }
 
+    function clearAllIntervals() {
+        while (intervals.length > 0) clearInterval(intervals.pop())
+    }
+
     function automatic_next() {
-        if (!automatic_tag.checked)
+        if (!automatic_tag.checked) {
+            clearAllIntervals();
             return;
+        }
         msec = parseInt(automatic_msec.value, 10);
-        setTimeout(() => {
-            if (change_image(1))
-                automatic_next()
-            else {
-                automatic_tag.checked = false;
-            }
-        }, msec);
+
+        intervals.push(setInterval(() => {
+            if (!change_image(1))
+                clearAllIntervals();
+        }, msec));
     }
 
     async function group_click(day, group) {
+        selected_group = group
         let filename = group[1];
         let gs = await get('/api/group_summary?filename=' + filename);
         // let img = document.createElement('img')
         image_list = gs;
-        load_image(0)
-        img_div.scrollIntoView({behavior: 'smooth'})
-        //console.log(gs);
+        image_index = 0;
+        load_image()
+        automatic_next();
     }
 
     function append_day(day) {
@@ -129,7 +145,7 @@
 
     }
 
-    async function start() {
+    async function load_metadata() {
         let summary = await get('/api/summary');
         days_div.innerHTML = '';
         for (let day of summary) {
@@ -137,7 +153,13 @@
         }
     }
 
-    start()
+    async function metadata_refresh() {
+        let result = await get('/api/metadata_refresh');
+        console.log(result)
+        await load_metadata()
+    }
+
+    load_metadata()
 
 </script>
 </body>

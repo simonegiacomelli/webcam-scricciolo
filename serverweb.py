@@ -53,6 +53,10 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 self.summary()
             elif rpath == '/api/group_summary':
                 self.group_summary(params['filename'])
+            elif rpath == '/api/metadata_refresh':
+                self.metadata_refresh()
+                self.send_json({'result': 'ok'})
+
         else:
             super(RequestHandler, self).do_GET()
 
