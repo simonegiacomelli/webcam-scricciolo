@@ -31,13 +31,6 @@ class File:
     def __lt__(self, other):
         return self.name < other.name
 
-    def next(self) -> 'File':
-        return None
-
-    def prev(self) -> 'File':
-        return None
-
-
 class Group:
     def __init__(self, name, files: List[File]):
         self.name = name
@@ -123,8 +116,11 @@ class Metadata:
         # group_i = ( '17:15:49', 'CAM1_01-20200830171549-00.jpg' )
         return [[d.date_str, [(g.time_str, g.files[0].name) for g in d.groups]] for d in self.days]
 
+    def group_summary(self, filename):
+        return ''
+
 
 if __name__ == '__main__':
     md = Metadata.from_folder('/Users/simonegiacomelli/Documents/webcam/pi/webcam/capture')
 
-    print(json.dumps(md.summary,indent=2))
+    print(json.dumps(md.summary, indent=2))
