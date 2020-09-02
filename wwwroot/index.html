@@ -19,8 +19,10 @@
 <label>
     <input id="automatic_tag" type="checkbox" onclick="automatic_next_click()" checked>automatic next
 </label>
-<label><input id="automatic_msec" type="number" value="200"> msec wait
+<br>
+<label><input id="automatic_msec" type="number" value="200" style="width: 3ch"> msec wait
 </label>
+<button onclick="return delete_click()">delete</button>
 <br>
 <span id="img_div"></span><br>
 <progress id="progress_tag" value="0" max="100" style="width: 100%">0%</progress>
@@ -66,6 +68,13 @@
     let selected_group = {}
     let image_list = [];
     let image_index = 0;
+
+    async function delete_click() {
+        if (!confirm('Are you sure?'))
+            return;
+        let result = await get('/api/delete_group?filename=' + image_list[0]);
+        await metadata_refresh()
+    }
 
     function img_click() {
         reset_index()

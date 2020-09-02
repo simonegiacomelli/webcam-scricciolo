@@ -1,10 +1,12 @@
+import os
 import json
 import sys
 from functools import partial
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+from typing import List
 from urllib.parse import urlparse, parse_qs
 
-from webcam import Metadata
+from webcam import Metadata, File
 
 
 class RequestHandler(SimpleHTTPRequestHandler):
@@ -31,6 +33,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def group_summary(self, filename):
         self.send_json(self.metadata.group_summary(filename))
 
+    def delete_group(self, filename):
+        delete_list: List[File] = self.metadata.files[filename].group.files
+        [os.remove(self.image_directory + '/' + f.name) for f in delete_list]
+        self.send_json({'result': 'ok'})
+
     def serve_file(self, directory, filename):
         self.directory = directory
         self.path = '/' + filename
@@ -56,6 +63,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
             elif rpath == '/api/metadata_refresh':
                 self.metadata_refresh()
                 self.send_json({'result': 'ok'})
+            elif rpath == '/api/delete_group':
+                self.delete_group(params['filename'])
 
         else:
             super(RequestHandler, self).do_GET()

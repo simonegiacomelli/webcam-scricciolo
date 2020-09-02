@@ -35,7 +35,7 @@ class File:
 class Group:
     def __init__(self, name, files: List[File]):
         self.name = name
-        self.files = sorted(files)
+        self.files: List[File] = sorted(files)
         self.date_str = self.files[0].date_str
         self.time_str = self.files[0].time_str
         for f in files:
