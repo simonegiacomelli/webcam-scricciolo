@@ -10,30 +10,26 @@ from webcam import Metadata, File
 
 
 class RequestHandler(SimpleHTTPRequestHandler):
-    _metadata: Metadata = None
+    metadata: Metadata = None
     query_index = 4
     path_index = 2
 
     def __init__(self, *args, image_directory=None, directory=None, **kwargs):
         self.image_directory = image_directory
+        if self.metadata is None:
+            self.metadata_refresh()
         super(RequestHandler, self).__init__(*args, directory=directory, **kwargs)
 
-    @property
-    def metadata(self) -> Metadata:
-        if RequestHandler._metadata is None:
-            self.metadata_refresh()
-        return RequestHandler._metadata
-
     def metadata_refresh(self):
-        RequestHandler._metadata = Metadata.from_folder(self.image_directory)
+        self.metadata = Metadata.from_folder(self.image_directory)
 
-    def summary(self):
+    def API_summary(self):
         self.send_json(self.metadata.summary)
 
-    def group_summary(self, filename):
+    def API_group_summary(self, filename):
         self.send_json(self.metadata.group_summary(filename))
 
-    def delete_group(self, filename):
+    def API_delete_group(self, filename):
         delete_list: List[File] = self.metadata.files[filename].group.files
         [os.remove(self.image_directory + '/' + f.name) for f in delete_list]
         self.send_json({'result': 'ok'})
@@ -57,14 +53,14 @@ class RequestHandler(SimpleHTTPRequestHandler):
             if rpath == '/api/image':
                 self.serve_file(self.image_directory, params['filename'])
             elif rpath == '/api/summary':
-                self.summary()
+                self.API_summary()
             elif rpath == '/api/group_summary':
-                self.group_summary(params['filename'])
+                self.API_group_summary(params['filename'])
             elif rpath == '/api/metadata_refresh':
                 self.metadata_refresh()
                 self.send_json({'result': 'ok'})
             elif rpath == '/api/delete_group':
-                self.delete_group(params['filename'])
+                self.API_delete_group(params['filename'])
 
         else:
             super(RequestHandler, self).do_GET()
