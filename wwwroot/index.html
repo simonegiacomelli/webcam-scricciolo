@@ -23,10 +23,10 @@
 </label>
 <br>
 <span id="img_div"></span><br>
-<progress id="progress_tag" value="0" max="100">0%</progress>
+<progress id="progress_tag" value="0" max="100" style="width: 100%">0%</progress>
+<br>
 
-
-<img id="img_tag" src="" alt="">
+<img id="img_tag" src="" alt="" style="width: 100%; height: auto" onclick="img_click()">
 
 
 <template id="day_template">
@@ -67,9 +67,14 @@
     let image_list = [];
     let image_index = 0;
 
+    function img_click() {
+        reset_index()
+    }
+
     function reset_index() {
         image_index = 0;
         load_image();
+        automatic_next();
     }
 
     function index_description() {
@@ -80,14 +85,14 @@
         progress_tag.value = Math.round((image_index + 1) / image_list.length * 100)
         filename = image_list[image_index]
         console.log(`loading ${filename}`)
-        img_div.innerHTML = filename + '<br>' + index_description()
+        img_div.innerHTML = index_description() + '<br>' + filename
         img_tag.src = '/api/image?filename=' + filename
     }
 
     function change_image(offset) {
         let index = image_index + offset;
         if (index < 0 || index >= image_list.length) {
-            img_div.innerHTML = 'no further images ' + index_description();
+            img_div.innerHTML = index_description() + '<br>no further images';
             return false;
         }
         image_index = index;
@@ -108,9 +113,10 @@
                 clearAllIntervals();
         }, msec));
     }
-    function automatic_next_click(){
-        if(automatic_tag.checked)
-             automatic_next();
+
+    function automatic_next_click() {
+        if (automatic_tag.checked)
+            automatic_next();
         else
             clearAllIntervals();
     }
