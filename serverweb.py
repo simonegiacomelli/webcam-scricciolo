@@ -47,16 +47,14 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def API_image(self, filename):
         self.directory = self.image_directory
         self.path = '/' + filename
-        print(['serving to', self.image_directory, self.path])
         super(RequestHandler, self).do_GET()
 
     def do_GET(self):
-        print('--------API', self.api)
         params, rpath = self.decode_request()
         if rpath.startswith('/api/'):
-            m = self.api.get('API_' + rpath[5:], None)
-            if m is not None:
-                m(self, **params)
+            api_method = self.api.get('API_' + rpath[5:], None)
+            if api_method is not None:
+                api_method(self, **params)
             else:
                 self.send_error(404, 'api not found')
         else:
@@ -85,7 +83,7 @@ def main():
     port = 8090
     print('starting server web on port %d...' % port)
     args = sys.argv[1:]
-    image_directory = './test_files/flat_files' if len(sys.argv) == 0 else args[0]
+    image_directory = './test_files/flat_files' if len(args) == 0 else args[0]
 
     httpd = HTTPServer(('', port), partial(RequestHandler
                                            , image_directory=image_directory
