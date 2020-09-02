@@ -88,7 +88,7 @@ def main():
     else:
         image_directory = './test_files/flat_files'
 
-    server = ('', 8000)
+    server = ('', 8090)
 
     httpd = HTTPServer(server, partial(RequestHandler
                                        , image_directory=image_directory
