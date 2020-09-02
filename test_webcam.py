@@ -94,6 +94,7 @@ class TestWebcam(TestCase):
         group: Group = file.group
         self.assertEqual('402', group.name)
         self.assertEqual(12, len(group.files))
+        self.assertEqual('CAM1_402-20200827012938-01.jpg', group.files[-1].name)
 
     def test_summary(self):
         target = Metadata(self.lines)
