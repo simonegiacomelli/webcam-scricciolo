@@ -20,7 +20,7 @@
     <input id="automatic_tag" type="checkbox" onclick="automatic_next_click()" checked>automatic next
 </label>
 <br>
-<label><input id="automatic_msec" type="number" value="200" style="width: 6ch"> msec wait
+<label><input id="automatic_msec" type="number" value="200" style="width: 8ch"> msec wait
 </label>
 <button onclick="return delete_click()">delete</button>
 <br>
@@ -113,12 +113,19 @@
         while (intervals.length > 0) clearInterval(intervals.pop())
     }
 
+    function getInterval() {
+        return parseInt(automatic_msec.value, 10);
+    }
+
     function automatic_next() {
         clearAllIntervals();
-        msec = parseInt(automatic_msec.value, 10);
-
+        if (!automatic_tag.checked)
+            return;
+        let msec = getInterval();
         intervals.push(setInterval(() => {
-            if (!change_image(1))
+            if (msec != getInterval())
+                automatic_next();
+            else if (!automatic_tag.checked || !change_image(1))
                 clearAllIntervals();
         }, msec));
     }
