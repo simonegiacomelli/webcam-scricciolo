@@ -24,13 +24,14 @@ class RequestHandler(SimpleHTTPRequestHandler):
         super(RequestHandler, self).__init__(*args, directory=directory, **kwargs)
 
     def init_class_once(self):
-        if self.api is not None:
+        if RequestHandler.api is not None:
             return
-        self.api = {d: getattr(RequestHandler, d) for d in dir(RequestHandler) if d.startswith('API_')}
+        RequestHandler.api = {d: getattr(RequestHandler, d) for d in dir(RequestHandler) if d.startswith('API_')}
         self.metadata_refresh()
 
     def metadata_refresh(self):
-        self.metadata = Metadata.from_folder(self.image_directory)
+        print('------========= refreshing metadata')
+        RequestHandler.metadata = Metadata.from_folder(self.image_directory)
 
     def API_metadata_refresh(self):
         self.metadata_refresh()
