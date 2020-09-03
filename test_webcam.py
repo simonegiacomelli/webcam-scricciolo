@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 from pprint import pprint
 from unittest import TestCase
 
@@ -17,13 +18,14 @@ class TestDecodeFilename(TestCase):
         self.assertEqual('89', index)
 
 
+def file_lines(file):
+    return [line for line in Path(file).read_text().splitlines()]
+
+
 class TestWebcam(TestCase):
 
     def setUp(self) -> None:
-        with open('test_files/ls.txt', 'r') as f:
-            self.lines = [line.rstrip('\n') for line in f.readlines()]
-        with open('test_files/ls_bug1.txt', 'r') as f:
-            self.lines_bug1 = [line.rstrip('\n') for line in f.readlines()]
+        self.lines = file_lines('test_files/ls.txt')
 
     def test_file_line_count(self):
         self.assertEqual(103, len(self.lines))
@@ -78,7 +80,7 @@ class TestWebcam(TestCase):
         self.assertEqual(['2020-08-25', '2020-08-27', '2020-08-30'], target.days.names)
 
     def test_days_names_bug1(self):
-        target = Metadata(self.lines_bug1)
+        target = Metadata(file_lines('test_files/ls_bug1.txt'))
         actual = target.days.names
         expected = sorted(list(set(actual)))
         self.assertEqual(expected, actual)
