@@ -37,9 +37,9 @@ class TestWebcam(TestCase):
         target = Metadata(reversed(self.lines))
         actual = target.groups['402'].files
         self.assertEqual(12, len(actual))
-        self.assertEqual('CAM1_402-20200827012933-00.jpg', actual[0].name)
-        self.assertEqual('CAM1_402-20200827012934-01.jpg', actual[3].name)
-        self.assertEqual('CAM1_402-20200827012938-01.jpg', actual[-1].name)
+        self.assertEqual('20200827/402/CAM1_402-20200827012933-00.jpg', actual[0].name)
+        self.assertEqual('20200827/402/CAM1_402-20200827012934-01.jpg', actual[3].name)
+        self.assertEqual('20200827/402/CAM1_402-20200827012938-01.jpg', actual[-1].name)
 
     def test_Groups_index(self):
         target = Metadata(reversed(self.lines))
@@ -85,16 +85,16 @@ class TestWebcam(TestCase):
 
     def test_files_by_name_should_match_group(self):
         target = Metadata(self.lines)
-        file: File = target.files['CAM1_402-20200827012938-01.jpg']
-        self.assertEqual('CAM1_402-20200827012938-01.jpg', file.name)
+        file: File = target.files['20200827/402/CAM1_402-20200827012938-01.jpg']
+        self.assertEqual('20200827/402/CAM1_402-20200827012938-01.jpg', file.name)
 
     def test_files_by_name__should_provide_group(self):
         target = Metadata(self.lines)
-        file: File = target.files['CAM1_402-20200827012938-01.jpg']
+        file: File = target.files['20200827/402/CAM1_402-20200827012938-01.jpg']
         group: Group = file.group
         self.assertEqual('402', group.name)
         self.assertEqual(12, len(group.files))
-        self.assertEqual('CAM1_402-20200827012938-01.jpg', group.files[-1].name)
+        self.assertEqual('20200827/402/CAM1_402-20200827012938-01.jpg', group.files[-1].name)
 
     def test_summary(self):
         target = Metadata(self.lines)
@@ -103,20 +103,20 @@ class TestWebcam(TestCase):
         self.assertEqual(list, type(summary))
         self.assertEqual(3, len(summary))
 
-        expected_day0 = ['2020-08-26', [('13:55:49', 'CAM1_355-20200826135549-00.jpg')]]
+        expected_day0 = ['2020-08-26', [('13:55:49', '20200826/355/CAM1_355-20200826135549-00.jpg')]]
         self.assertEqual(expected_day0, summary[0])
 
-        expected_day1 = ['2020-08-27', [('01:29:33', 'CAM1_402-20200827012933-00.jpg'),
-                                        ('02:00:00', 'CAM1_403-20200827020000-00.jpg')]]
+        expected_day1 = ['2020-08-27', [('01:29:33', '20200827/402/CAM1_402-20200827012933-00.jpg'),
+                                        ('02:00:00', '20200827/403/CAM1_403-20200827020000-00.jpg')]]
         self.assertEqual(expected_day1, summary[1])
 
-        expected_day2 = ['2020-08-30', [('17:15:49', 'CAM1_01-20200830171549-00.jpg'),
-                                        ('17:16:35', 'CAM1_02-20200830171635-01.jpg')]]
+        expected_day2 = ['2020-08-30', [('17:15:49', '20200830/01/CAM1_01-20200830171549-00.jpg'),
+                                        ('17:16:35', '20200830/02/CAM1_02-20200830171635-01.jpg')]]
         self.assertEqual(expected_day2, summary[2])
 
     def test_group_summary(self):
         target = Metadata(self.lines)
-        gs = target.group_summary('CAM1_403-20200827020000-00.jpg')
+        gs = target.group_summary('20200827/403/CAM1_403-20200827020000-00.jpg')
         self.assertEqual(7, len(gs))
-        self.assertEqual('CAM1_403-20200827020000-00.jpg', gs[0])
-        self.assertEqual('CAM1_403-20200827020003-00.jpg', gs[-1])
+        self.assertEqual('20200827/403/CAM1_403-20200827020000-00.jpg', gs[0])
+        self.assertEqual('20200827/403/CAM1_403-20200827020003-00.jpg', gs[-1])

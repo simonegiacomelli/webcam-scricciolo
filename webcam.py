@@ -1,3 +1,4 @@
+import glob
 import itertools
 import json
 from itertools import groupby
@@ -8,7 +9,8 @@ from typing import List
 
 
 def decode_filename(filename: str):
-    # 'CAM1_220-20200825130031-00.jpg'
+    no_match = None, None, None
+    # '20200830/02/CAM1_02-20200830171635-01.jpg'
     parts = filename.replace('-', '_').replace('.', '_').split('_')
     if len(parts) < 4:
         return None, None, None
@@ -60,7 +62,7 @@ class Day:
 class Groups:
     def __init__(self, groups: List[Group]):
         self.groups = groups
-        self.names = [group.name for group in self.groups]
+        self.names = sorted([group.name for group in self.groups])
         self.groups_by_name = {group.name: group for group in self.groups}
 
     def __getitem__(self, item) -> Group:
@@ -108,7 +110,8 @@ class Metadata:
 
     @classmethod
     def from_folder(cls, file) -> 'Metadata':
-        return Metadata(os.listdir(file))
+        glob_list = [f[len(file) + 1:] for f in glob.glob(file + "/**", recursive=True) if f.endswith('.jpg')]
+        return Metadata(glob_list)
 
     @property
     def summary(self):
