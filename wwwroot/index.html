@@ -123,7 +123,7 @@
             return;
         let msec = getInterval();
         intervals.push(setInterval(() => {
-            if (msec != getInterval())
+            if (msec !== getInterval())
                 automatic_next();
             else if (!automatic_tag.checked || !change_image(1))
                 clearAllIntervals();
