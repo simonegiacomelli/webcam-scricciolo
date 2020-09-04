@@ -131,8 +131,12 @@ class RefreshableCache(Generic[T]):
 
 
 class WebApi:
-    def __init__(self, refreshable_metadata: RefreshableCache[Metadata]):
+    def __init__(self, refreshable_metadata: RefreshableCache[Metadata]
+                 , image_directory: str = None
+                 , response=None):
         self.refreshable_metadata = refreshable_metadata
+        self.image_directory = image_directory
+        self.response = response
 
     @property
     def metadata(self):
@@ -158,7 +162,10 @@ class WebApi:
     def API_delete_group(self, filename):
         delete_list: List[File] = self.metadata.files[filename].group.files
         [os.remove(self.image_directory + '/' + f.name) for f in delete_list]
-        self.send_json({'result': 'ok'})
+        return {'result': 'ok'}
+
+    def API_image(self, filename):
+        self.response.serve_file(self.image_directory, filename)
 
 
 if __name__ == '__main__':

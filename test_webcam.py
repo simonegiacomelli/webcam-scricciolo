@@ -1,6 +1,6 @@
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, patch, call
 
 from serverweb import RefreshableCache
 from webcam import decode_filename, Metadata, File, Group, WebApi
