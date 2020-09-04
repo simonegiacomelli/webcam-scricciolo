@@ -19,6 +19,9 @@ class Cached:
     def __call__(self, *args, **kwargs):
         return self.value
 
+    def refresh(self):
+        self.value = self.provider()
+
 
 class WebApi:
     pass
