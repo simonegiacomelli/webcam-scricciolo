@@ -5,10 +5,23 @@ import sys
 from functools import partial
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from typing import List, Dict, Callable
+from typing import List, Dict, Callable, Any
 from urllib.parse import urlparse, parse_qs
 
 from webcam import Metadata, File
+
+
+class Cached:
+    def __init__(self, provider: Callable[[], Any]):
+        self.provider = provider
+        self.value = provider()
+
+    def __call__(self, *args, **kwargs):
+        return self.value
+
+
+class WebApi:
+    pass
 
 
 class RequestHandler(SimpleHTTPRequestHandler):
