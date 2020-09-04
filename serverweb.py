@@ -11,7 +11,7 @@ from urllib.parse import urlparse, parse_qs
 from webcam import Metadata, File
 
 
-class Cached:
+class RefreshableCache:
     def __init__(self, provider: Callable[[], Any]):
         self.provider = provider
         self.value: Any = None
