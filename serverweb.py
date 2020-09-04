@@ -24,8 +24,25 @@ class RefreshableCache:
         self.value = self.provider()
 
 
-class WebApi:
-    pass
+class Dispatch:
+    def __init__(self, ):
+        self.registered = {}
+        self.prefix: str = None
+
+    def register(self, clazz, prefix):
+        self.registered = {d[len(prefix):]: getattr(clazz, d) for d in dir(clazz) if d.startswith(prefix)}
+        self.prefix = prefix
+        return self
+
+    def dispatch(self, instance, method_name):
+        m = getattr(instance, self.prefix + method_name)
+        m()
+
+
+#
+# class WebApi:
+#     def API_days(self):
+#         pass
 
 
 class RequestHandler(SimpleHTTPRequestHandler):
