@@ -14,7 +14,8 @@ from webcam import Metadata, File
 class Cached:
     def __init__(self, provider: Callable[[], Any]):
         self.provider = provider
-        self.value = provider()
+        self.value: Any = None
+        self.refresh()
 
     def __call__(self, *args, **kwargs):
         return self.value
