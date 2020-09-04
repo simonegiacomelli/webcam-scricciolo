@@ -1,28 +1,14 @@
 import base64
-import os
 import json
+import os
 import sys
 from functools import partial
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from typing import List, Dict, Callable, Any, Union
+from typing import List, Dict, Callable, Union
 from urllib.parse import urlparse, parse_qs
 
-from webcam import Metadata, File
-
-
-class RefreshableCache:
-    def __init__(self, provider: Callable[[], Any]):
-        self.provider = provider
-        self.value: Any = None
-
-    def __call__(self, *args, **kwargs):
-        if self.value is None:
-            self.refresh()
-        return self.value
-
-    def refresh(self):
-        self.value = self.provider()
+from webcam import Metadata, File, WebApi, RefreshableCache
 
 
 class MethodNotRegistered(Exception):
@@ -39,19 +25,11 @@ class Dispatch:
         self.prefix = prefix
         return self
 
-    def dispatch(self, instance, method_name, params={}):
+    def dispatch(self, instance, method_name, params: Dict = {}):
         if method_name not in self.registered.keys():
             raise MethodNotRegistered(method_name)
         m = getattr(instance, self.prefix + method_name)
         return m(**params)
-
-
-class WebApi:
-    def __init__(self, metadata: Metadata):
-        self.metadata = metadata
-
-    def API_days(self):
-        return tuple({'name': n} for n in self.metadata.days.names)
 
 
 class RequestHandler(SimpleHTTPRequestHandler):
@@ -60,11 +38,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
     path_index = 2
     api: Dict[str, Callable] = None
 
-    def __init__(self, *args, metadata: Union[Metadata, RefreshableCache]
+    def __init__(self, *args, refreshable_metadata: RefreshableCache[Metadata]
                  , api_dispatch: Dispatch
                  , image_directory=None, directory=None, **kwargs):
         self.api_dispatch = api_dispatch
-        self.metadata = metadata
+        self.refreshable_metadata = refreshable_metadata
         self.image_directory = image_directory
         self.init_class_once()
         super(RequestHandler, self).__init__(*args, directory=directory, **kwargs)
@@ -73,20 +51,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
         if RequestHandler.api is not None:
             return
         RequestHandler.api = {d: getattr(RequestHandler, d) for d in dir(RequestHandler) if d.startswith('API_')}
-
-    def metadata_refresh(self):
-        print('------========= refreshing metadata')
-        RequestHandler.metadata = Metadata.from_folder(self.image_directory)
-
-    def API_metadata_refresh(self):
-        self.metadata.refresh()
-        self.send_json({'result': 'ok'})
-
-    def API_summary(self):
-        self.send_json(self.metadata.summary)
-
-    def API_group_summary(self, filename):
-        self.send_json(self.metadata.group_summary(filename))
 
     def API_delete_group(self, filename):
         delete_list: List[File] = self.metadata.files[filename].group.files
@@ -105,9 +69,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
             if not self.authorized():
                 self.send_string('not authorized', code=401)
                 return
-            if api_name == 'days':
-                instance = WebApi(self.metadata())
-                result = self.api_dispatch.dispatch(instance, api_name, **params)
+            if api_name in {'days', 'summary', 'group_summary', 'metadata_refresh'}:
+                instance = WebApi(self.refreshable_metadata)
+                result = self.api_dispatch.dispatch(instance, api_name, params)
                 if result is not None:
                     self.send_json(result)
             else:
@@ -154,10 +118,10 @@ def main():
     args = sys.argv[1:]
     image_directory = './test_files/flat_files' if len(args) == 0 else args[0]
 
-    metadata = RefreshableCache(lambda: Metadata.from_folder(image_directory))
+    refreshable_metadata = RefreshableCache(lambda: Metadata.from_folder(image_directory))
     api_dispatch = Dispatch().register(WebApi, 'API_')
     httpd = HTTPServer(('', port), partial(RequestHandler
-                                           , metadata=metadata
+                                           , refreshable_metadata=refreshable_metadata
                                            , api_dispatch=api_dispatch
                                            , image_directory=image_directory
                                            , directory='./wwwroot'))

@@ -1,39 +1,6 @@
 from unittest import TestCase
-from unittest.mock import Mock
 
-from serverweb import RefreshableCache, Dispatch, MethodNotRegistered, WebApi
-
-
-class TestRefreshableCache(TestCase):
-
-    def setUp(self) -> None:
-        self.counter = 0
-
-    def inc_counter(self):
-        self.counter += 1
-        return self.counter
-
-    def test_should_return_value_from_provider(self):
-        target = RefreshableCache(lambda: 'foo')
-        self.assertEqual('foo', target())
-
-    def test_should_call_provider_only_once(self):
-        target = RefreshableCache(self.inc_counter)
-
-        self.assertEqual(1, target())
-        self.assertEqual(1, target())
-
-    def test_early_refresh__should_call_provider_once(self):
-        target = RefreshableCache(self.inc_counter)
-        target.refresh()
-        self.assertEqual(1, target())
-        self.assertEqual(1, self.counter)
-
-    def test_provider_should_be_called_lazily(self):
-        target = RefreshableCache(self.inc_counter)
-        self.assertEqual(0, self.counter)
-        target()
-        self.assertEqual(1, self.counter)
+from serverweb import Dispatch, MethodNotRegistered
 
 
 class TestDispatch(TestCase):
@@ -91,12 +58,5 @@ class TestDispatch(TestCase):
 
         result = target.dispatch(instance, 'set_name', {'name': 'john'})
         self.assertEqual('john', instance.name)
-        self.assertEqual('done',result)
+        self.assertEqual('done', result)
 
-class TestWebApi(TestCase):
-
-    def test_api_days(self):
-        metadata = Mock()
-        metadata.days.names = ['day1', 'day2']
-        target = WebApi(metadata)
-        self.assertEqual(({'name': 'day1'}, {'name': 'day2'}), target.API_days())

@@ -1,11 +1,8 @@
+import datetime
 import glob
-import itertools
 import json
 from itertools import groupby
-import os
-import datetime
-from pprint import pprint
-from typing import List
+from typing import List, Callable, TypeVar, Generic
 
 
 def decode_filename(filename: str):
@@ -113,16 +110,49 @@ class Metadata:
         glob_list = [f[len(file) + 1:] for f in glob.glob(file + "/**", recursive=True) if f.endswith('.jpg')]
         return Metadata(glob_list)
 
+
+T = TypeVar('T')
+
+
+class RefreshableCache(Generic[T]):
+    def __init__(self, provider: Callable[[], T]):
+        self.provider = provider
+        self._value: T = None
+
     @property
-    def summary(self):
+    def value(self) -> T:
+        if self._value is None:
+            self.refresh()
+        return self._value
+
+    def refresh(self):
+        self._value = self.provider()
+
+
+class WebApi:
+    def __init__(self, refreshable_metadata: RefreshableCache[Metadata]):
+        self.refreshable_metadata = refreshable_metadata
+
+    @property
+    def metadata(self):
+        return self.refreshable_metadata.value
+
+    def API_days(self):
+        return tuple({'name': n} for n in self.metadata.days.names)
+
+    def API_summary(self):
         # [ day_1, day_2, ..., day_n]
         # day_i = ('2020-08-31',[ group_1, group_2, ..., group_n] )
         # group_i = ( '17:15:49', 'CAM1_01-20200830171549-00.jpg' )
-        return [[d.date_str, [(g.time_str, g.files[0].name) for g in d.groups]] for d in self.days]
+        return [[d.date_str, [(g.time_str, g.files[0].name) for g in d.groups]] for d in self.metadata.days]
 
-    def group_summary(self, filename):
-        files = self.files[filename].group.files
+    def API_group_summary(self, filename):
+        files = self.metadata.files[filename].group.files
         return [f.name for f in files]
+
+    def API_metadata_refresh(self):
+        self.refreshable_metadata.refresh()
+        return {'result': 'ok'}
 
 
 if __name__ == '__main__':
