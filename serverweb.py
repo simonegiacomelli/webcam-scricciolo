@@ -24,6 +24,10 @@ class RefreshableCache:
         self.value = self.provider()
 
 
+class MethodNotRegistered(Exception):
+    pass
+
+
 class Dispatch:
     def __init__(self, ):
         self.registered = {}
@@ -34,9 +38,11 @@ class Dispatch:
         self.prefix = prefix
         return self
 
-    def dispatch(self, instance, method_name):
+    def dispatch(self, instance, method_name, params={}):
+        if method_name not in self.registered.keys():
+            raise MethodNotRegistered(method_name)
         m = getattr(instance, self.prefix + method_name)
-        m()
+        m(**params)
 
 
 #
