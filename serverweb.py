@@ -5,7 +5,7 @@ import sys
 from functools import partial
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from typing import List, Dict, Callable, Any
+from typing import List, Dict, Callable, Any, Union
 from urllib.parse import urlparse, parse_qs
 
 from webcam import Metadata, File
@@ -15,9 +15,10 @@ class RefreshableCache:
     def __init__(self, provider: Callable[[], Any]):
         self.provider = provider
         self.value: Any = None
-        self.refresh()
 
     def __call__(self, *args, **kwargs):
+        if self.value is None:
+            self.refresh()
         return self.value
 
     def refresh(self):
@@ -42,7 +43,7 @@ class Dispatch:
         if method_name not in self.registered.keys():
             raise MethodNotRegistered(method_name)
         m = getattr(instance, self.prefix + method_name)
-        m(**params)
+        return m(**params)
 
 
 class WebApi:
@@ -54,13 +55,16 @@ class WebApi:
 
 
 class RequestHandler(SimpleHTTPRequestHandler):
-    metadata: Metadata = None
     auth_file = Path('.auth.txt')  # username:password see RFC 7617
     query_index = 4
     path_index = 2
     api: Dict[str, Callable] = None
 
-    def __init__(self, *args, image_directory=None, directory=None, **kwargs):
+    def __init__(self, *args, metadata: Union[Metadata, RefreshableCache]
+                 , api_dispatch: Dispatch
+                 , image_directory=None, directory=None, **kwargs):
+        self.api_dispatch = api_dispatch
+        self.metadata = metadata
         self.image_directory = image_directory
         self.init_class_once()
         super(RequestHandler, self).__init__(*args, directory=directory, **kwargs)
@@ -69,14 +73,13 @@ class RequestHandler(SimpleHTTPRequestHandler):
         if RequestHandler.api is not None:
             return
         RequestHandler.api = {d: getattr(RequestHandler, d) for d in dir(RequestHandler) if d.startswith('API_')}
-        self.metadata_refresh()
 
     def metadata_refresh(self):
         print('------========= refreshing metadata')
         RequestHandler.metadata = Metadata.from_folder(self.image_directory)
 
     def API_metadata_refresh(self):
-        self.metadata_refresh()
+        self.metadata.refresh()
         self.send_json({'result': 'ok'})
 
     def API_summary(self):
@@ -98,14 +101,21 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         params, rpath = self.decode_request()
         if rpath.startswith('/api/'):
+            api_name = rpath[5:]
             if not self.authorized():
                 self.send_string('not authorized', code=401)
                 return
-            api_method = self.api.get('API_' + rpath[5:], None)
-            if api_method is not None:
-                api_method(self, **params)
+            if api_name == 'days':
+                instance = WebApi(self.metadata())
+                result = self.api_dispatch.dispatch(instance, api_name, **params)
+                if result is not None:
+                    self.send_json(result)
             else:
-                self.send_error(404, 'api not found')
+                api_method = self.api.get('API_' + api_name, None)
+                if api_method is not None:
+                    api_method(self, **params)
+                else:
+                    self.send_error(404, 'api not found')
         else:
             super(RequestHandler, self).do_GET()
 
@@ -144,7 +154,11 @@ def main():
     args = sys.argv[1:]
     image_directory = './test_files/flat_files' if len(args) == 0 else args[0]
 
+    metadata = RefreshableCache(lambda: Metadata.from_folder(image_directory))
+    api_dispatch = Dispatch().register(WebApi, 'API_')
     httpd = HTTPServer(('', port), partial(RequestHandler
+                                           , metadata=metadata
+                                           , api_dispatch=api_dispatch
                                            , image_directory=image_directory
                                            , directory='./wwwroot'))
     print('serving...')

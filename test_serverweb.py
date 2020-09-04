@@ -23,11 +23,17 @@ class TestRefreshableCache(TestCase):
         self.assertEqual(1, target())
         self.assertEqual(1, target())
 
-    def test_refresh__should_call_provider_again_and_return_same_value(self):
+    def test_early_refresh__should_call_provider_once(self):
         target = RefreshableCache(self.inc_counter)
         target.refresh()
-        self.assertEqual(2, self.counter)
-        self.assertEqual(2, target())
+        self.assertEqual(1, target())
+        self.assertEqual(1, self.counter)
+
+    def test_provider_should_be_called_lazily(self):
+        target = RefreshableCache(self.inc_counter)
+        self.assertEqual(0, self.counter)
+        target()
+        self.assertEqual(1, self.counter)
 
 
 class TestDispatch(TestCase):
@@ -71,20 +77,21 @@ class TestDispatch(TestCase):
         self.assertRaises(MethodNotRegistered, lambda: target.dispatch(instance, 'late'))
         self.assertFalse(self.called)
 
-    def test_dispatch__with_paramters(self):
+    def test_dispatch__with_param_and_return_value(self):
         class Endpoint:
             def __init__(self):
                 self.name = None
 
             def API_set_name(self, name):
                 self.name = name
+                return 'done'
 
         target = Dispatch().register(Endpoint, 'API_')
         instance = Endpoint()
 
-        target.dispatch(instance, 'set_name', {'name': 'john'})
+        result = target.dispatch(instance, 'set_name', {'name': 'john'})
         self.assertEqual('john', instance.name)
-
+        self.assertEqual('done',result)
 
 class TestWebApi(TestCase):
 
