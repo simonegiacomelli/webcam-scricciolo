@@ -45,10 +45,12 @@ class Dispatch:
         m(**params)
 
 
-#
-# class WebApi:
-#     def API_days(self):
-#         pass
+class WebApi:
+    def __init__(self, metadata: Metadata):
+        self.metadata = metadata
+
+    def API_days(self):
+        return tuple({'name': n} for n in self.metadata.days.names)
 
 
 class RequestHandler(SimpleHTTPRequestHandler):

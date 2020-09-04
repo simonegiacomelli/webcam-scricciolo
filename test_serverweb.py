@@ -1,6 +1,7 @@
 from unittest import TestCase
+from unittest.mock import Mock
 
-from serverweb import RefreshableCache, Dispatch, MethodNotRegistered
+from serverweb import RefreshableCache, Dispatch, MethodNotRegistered, WebApi
 
 
 class TestRefreshableCache(TestCase):
@@ -83,3 +84,12 @@ class TestDispatch(TestCase):
 
         target.dispatch(instance, 'set_name', {'name': 'john'})
         self.assertEqual('john', instance.name)
+
+
+class TestWebApi(TestCase):
+
+    def test_api_days(self):
+        metadata = Mock()
+        metadata.days.names = ['day1', 'day2']
+        target = WebApi(metadata)
+        self.assertEqual(({'name': 'day1'}, {'name': 'day2'}), target.API_days())
