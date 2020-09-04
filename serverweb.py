@@ -1,35 +1,14 @@
 import base64
 import json
-import os
 import sys
 from functools import partial
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from typing import List, Dict, Callable, Union
+from typing import Dict, Callable
 from urllib.parse import urlparse, parse_qs
 
-from webcam import Metadata, File, WebApi, RefreshableCache
-
-
-class MethodNotRegistered(Exception):
-    pass
-
-
-class Dispatch:
-    def __init__(self, ):
-        self.registered = {}
-        self.prefix: str = None
-
-    def register(self, clazz, prefix):
-        self.registered = {d[len(prefix):]: getattr(clazz, d) for d in dir(clazz) if d.startswith(prefix)}
-        self.prefix = prefix
-        return self
-
-    def dispatch(self, instance, method_name, params: Dict = {}):
-        if method_name not in self.registered.keys():
-            raise MethodNotRegistered(method_name)
-        m = getattr(instance, self.prefix + method_name)
-        return m(**params)
+from dispatch import Dispatch
+from webcam import Metadata, WebApi, RefreshableCache
 
 
 class RequestHandler(SimpleHTTPRequestHandler):
@@ -52,11 +31,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
             return
         RequestHandler.api = {d: getattr(RequestHandler, d) for d in dir(RequestHandler) if d.startswith('API_')}
 
-    def API_delete_group(self, filename):
-        delete_list: List[File] = self.metadata.files[filename].group.files
-        [os.remove(self.image_directory + '/' + f.name) for f in delete_list]
-        self.send_json({'result': 'ok'})
-
     def API_image(self, filename):
         self.directory = self.image_directory
         self.path = '/' + filename
@@ -69,7 +43,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
             if not self.authorized():
                 self.send_string('not authorized', code=401)
                 return
-            if api_name in {'days', 'summary', 'group_summary', 'metadata_refresh'}:
+            if api_name not in {'image'}:
                 instance = WebApi(self.refreshable_metadata)
                 result = self.api_dispatch.dispatch(instance, api_name, params)
                 if result is not None:

@@ -1,6 +1,7 @@
 import datetime
 import glob
 import json
+import os
 from itertools import groupby
 from typing import List, Callable, TypeVar, Generic
 
@@ -153,6 +154,11 @@ class WebApi:
     def API_metadata_refresh(self):
         self.refreshable_metadata.refresh()
         return {'result': 'ok'}
+
+    def API_delete_group(self, filename):
+        delete_list: List[File] = self.metadata.files[filename].group.files
+        [os.remove(self.image_directory + '/' + f.name) for f in delete_list]
+        self.send_json({'result': 'ok'})
 
 
 if __name__ == '__main__':
