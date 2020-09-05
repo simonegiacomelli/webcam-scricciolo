@@ -102,6 +102,7 @@ def main():
                                            , api_dispatch=api_dispatch
                                            , image_directory=image_directory
                                            , directory='./wwwroot'))
+    httpd.timeout = 10
 
     print('serving...')
     Thread(target=httpd.serve_forever).start()
