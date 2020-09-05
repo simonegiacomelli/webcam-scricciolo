@@ -1,15 +1,16 @@
-var intervals = [];
-var day_template = document.querySelector('#day_template');
-var group_template = document.querySelector('#group_template');
-var days_div = document.getElementById('days_div')
-var img_div = document.getElementById('img_div')
-var img_tag = document.getElementById('img_tag')
-var progress_tag = document.getElementById('progress_tag')
-var automatic_tag = document.getElementById('automatic_tag')
-var automatic_msec = document.getElementById('automatic_msec')
-var selected_group = {}
-var image_list = [];
-var image_index = 0;
+let intervals = [];
+let day_template = document.querySelector('#day_template');
+let group_template = document.querySelector('#group_template');
+let days_div = document.getElementById('days_div')
+let img_div = document.getElementById('img_div')
+let img_tag = document.getElementById('img_tag')
+let progress_tag = document.getElementById('progress_tag')
+let automatic_tag = document.getElementById('automatic_tag')
+let automatic_msec = document.getElementById('automatic_msec')
+let mask_images = document.getElementById('mask_images')
+let selected_group = {}
+let image_list = [];
+let image_index = 0;
 
 
 async function get(url) {
@@ -94,7 +95,7 @@ async function group_click(day, group) {
     let filename = group[1];
     let gs = await get('/api/group_summary?filename=' + filename);
     // let img = document.createElement('img')
-    image_list = gs;
+    image_list = (mask_images.checked) ? gs : gs.filter(e => !e.endsWith('m.jpg'));
     image_index = 0;
     load_image()
     automatic_next();
