@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Scricciolo webcam</title>
+    <style>
+        .group_btn {
+
+        }
+        .selected_btn:focus {
+            background-color: #4CAF50
+        }
+        .selected_btn{
+            background-color: #4CAF50
+        }
+    </style>
 </head>
 <body>
 <button onclick="return metadata_refresh()">metadata refresh</button>
@@ -21,7 +32,7 @@
 </label>
 <br>
 <label>
-    <input id="mask_images" type="checkbox" >mask images
+    <input id="mask_images" type="checkbox">mask images
 </label>
 <br>
 <label><input id="automatic_msec" type="number" value="200" style="width: 8ch"> msec wait
@@ -45,7 +56,7 @@
 
 <template id="group_template">
 
-    <button id="temp_group"></button>
+    <button id="temp_group" class="group_btn"></button>
 
 </template>
 

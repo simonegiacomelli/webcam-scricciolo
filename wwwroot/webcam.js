@@ -9,6 +9,7 @@ let automatic_tag = document.getElementById('automatic_tag')
 let automatic_msec = document.getElementById('automatic_msec')
 let mask_images = document.getElementById('mask_images')
 let selected_group = {}
+let selected_btn = null;
 let image_list = [];
 let image_index = 0;
 
@@ -101,6 +102,15 @@ async function group_click(day, group) {
     automatic_next();
 }
 
+function highlight_btn(btn) {
+    if (selected_btn != null)
+        selected_btn.classList.remove('selected_btn')
+
+    btn.classList.add( 'selected_btn')
+    btn.blur()
+    selected_btn = btn
+}
+
 function append_day(day) {
     let day_instance = day_template.content.cloneNode(true);
     let temp_day = (day_instance.querySelectorAll('#temp_day'))[0];
@@ -123,7 +133,8 @@ function append_day(day) {
         temp_group.href = '#'
         temp_groups_container.appendChild(group_instance);
         temp_group.onclick = (event) => {
-            group_click(day, group)
+            group_click(day, group);
+            highlight_btn(temp_group);
         }
     }
 
