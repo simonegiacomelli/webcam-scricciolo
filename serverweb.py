@@ -4,6 +4,9 @@ import sys
 from functools import partial
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
+from threading import Thread
+from time import sleep
+from typing import Callable
 from urllib.parse import urlparse, parse_qs
 
 from dispatch import Dispatch
@@ -73,9 +76,22 @@ class RequestHandler(SimpleHTTPRequestHandler):
         super(RequestHandler, self).do_GET()
 
 
+def wait_file_changes(file):
+    self_file = Path(file)
+    initial_st_mtime = self_file.stat().st_mtime
+    try:
+        while self_file.stat().st_mtime == initial_st_mtime:
+            sleep(0.5)
+    except KeyboardInterrupt as ex:
+        return False
+
+    print('File changed! Exiting...')
+    return True
+
+
 def main():
     port = 8090
-    print('starting server web on port %d...' % port)
+    print('Starting server web v1.1 on port %d...' % port)
     args = sys.argv[1:]
     image_directory = './test_files/flat_files' if len(args) == 0 else args[0]
 
@@ -86,8 +102,12 @@ def main():
                                            , api_dispatch=api_dispatch
                                            , image_directory=image_directory
                                            , directory='./wwwroot'))
+
     print('serving...')
-    httpd.serve_forever()
+    Thread(target=httpd.serve_forever).start()
+    changed = wait_file_changes(__file__)
+    httpd.shutdown()
+    sys.exit(4 if changed else 0)
 
 
 if __name__ == '__main__':

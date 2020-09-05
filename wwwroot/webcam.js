@@ -150,3 +150,6 @@ progress_tag.addEventListener('click', function (e) {
     image_index = Math.ceil(image_list.length * value_clicked) - 1
     load_image()
 });
+
+
+load_metadata();
